@@ -220,7 +220,7 @@ const convertPointToLegacy = (afm: AFM.IAfm) => (point: IDrillPointExtended): ID
     };
 };
 
-const convertDrillContextToLegacy = (
+export const convertDrillContextToLegacy = (
     drillContext: IDrillEventContextExtended,
     afm: AFM.IAfm,
 ): IDrillEventContext => {
