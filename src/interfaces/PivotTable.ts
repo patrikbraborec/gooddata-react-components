@@ -10,6 +10,7 @@ export interface IMenu {
 export type DefaultColumnWidth = "viewport" | "unset"; // | "auto"  | number; can be added later see ONE-4276
 export interface IColumnSizing {
     defaultWidth: DefaultColumnWidth;
+    columnWidths?: ColumnWidthItem[];
 }
 
 export interface IPivotTableConfig {
@@ -25,4 +26,28 @@ export interface IMenuAggregationClickConfig {
     measureIdentifiers: string[];
     attributeIdentifier: string;
     include: boolean;
+}
+
+export type ColumnWidthItem = IAttributeColumnWidthItem | IMeasureColumnWidthItem;
+type ColumnWidth = number | "auto"; // auto to override weak locator during reset of particular column
+interface IAttributeColumnWidthItem {
+    attributeColumnWidthItem: {
+        width: ColumnWidth;
+        attributeIdentifier: AFM.Identifier;
+        aggregation?: "sum"; // TODO INE do we need this?
+    };
+}
+
+interface IMeasureColumnWidthItem {
+    measureColumnWidthItem: {
+        width: ColumnWidth;
+        locators: LocatorItem[];
+    };
+}
+type LocatorItem = IAttributeLocatorItem | AFM.IMeasureLocatorItem;
+interface IAttributeLocatorItem {
+    attributeLocatorItem: {
+        attributeIdentifier: AFM.Identifier;
+        element?: string; // this is difference from AFM.IAttributeLocatorItem
+    };
 }
