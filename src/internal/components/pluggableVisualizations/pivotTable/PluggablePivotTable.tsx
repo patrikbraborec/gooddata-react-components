@@ -426,7 +426,11 @@ export class PluggablePivotTable extends AbstractPluggableVisualization {
             );
             const totals: VisualizationObject.IVisualizationTotal[] = (rowsBucket && rowsBucket.totals) || [];
 
-            const updatedConfig = this.enrichConfigWithColumnSizing(this.enrichConfigWithMenu(config));
+            const updatedConfig = getTableConfigFromFeatureFlags(
+                this.enrichConfigWithMenu(config),
+                this.featureFlags,
+                this.environment,
+            );
             const pivotTableProps = {
                 projectId: this.projectId,
                 drillableItems,
@@ -559,22 +563,5 @@ export class PluggablePivotTable extends AbstractPluggableVisualization {
             aggregationsSubMenu: true,
         };
         return merge({ menu }, config);
-    }
-
-    private enrichConfigWithColumnSizing(config: IPivotTableConfig): IPivotTableConfig {
-        const result = this.enrichConfigWithAutosize(config);
-        return this.enrichConfigWithGrowToFit(result);
-    }
-
-    private enrichConfigWithAutosize(config: IPivotTableConfig): IPivotTableConfig {
-        return getTableConfigFromFeatureFlags(config, this.featureFlags);
-    }
-
-    private enrichConfigWithGrowToFit(config: IPivotTableConfig): IPivotTableConfig {
-        if (this.environment === DASHBOARDS_ENVIRONMENT) {
-            return getTableConfigFromFeatureFlags(config, this.featureFlags);
-        }
-
-        return config;
     }
 }

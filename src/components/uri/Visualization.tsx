@@ -56,6 +56,7 @@ import { _experimentalDataSourceFactory } from "./experimentalDataSource";
 import IVisualizationObjectContent = VisualizationObject.IVisualizationObjectContent;
 import { getHighchartsAxisNameConfiguration } from "../../internal/utils/propertiesHelper";
 import { DEFAULT_LOCALE } from "../../constants/localization";
+
 export { Requireable };
 
 const { ExecuteAfmAdapter, toAfmResultSpec, createSubject } = DataLayer;
@@ -375,6 +376,8 @@ export class VisualizationWrapped extends React.Component<
                     filtersFromProps,
                 );
 
+                // TODO ONE-4407 widthDefs
+                // const widthDefs = mdObject.content.properties;
                 const pivotTableColumnProps = {
                     config: getTableConfigFromFeatureFlags(config, this.state.featureFlags),
                 };

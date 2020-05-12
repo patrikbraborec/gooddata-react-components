@@ -5,6 +5,8 @@ import { IChartConfig } from "../interfaces/Config";
 import isNil = require("lodash/isNil");
 import merge = require("lodash/merge");
 import { IColumnSizing, IPivotTableConfig } from "../interfaces/PivotTable";
+import { DASHBOARDS_ENVIRONMENT } from "../internal/constants/properties";
+import { VisualizationEnvironment } from "../components/uri/Visualization";
 
 export async function getFeatureFlags(sdk: SDK, projectId: string): Promise<IFeatureFlags> {
     const apiCallIdentifier = `getFeatureFlags.${projectId}`;
@@ -33,9 +35,11 @@ export function setConfigFromFeatureFlags(config: IChartConfig, featureFlags: IF
     return result;
 }
 
+// TODO: ONE-4407 refactor - here should be only feature flag logic
 export function getTableConfigFromFeatureFlags(
     config: IPivotTableConfig,
     featureFlags: IFeatureFlags,
+    environment?: VisualizationEnvironment,
 ): IPivotTableConfig {
     let result: IPivotTableConfig = config;
     const columnSizing: IColumnSizing = { defaultWidth: "viewport" };
@@ -44,7 +48,7 @@ export function getTableConfigFromFeatureFlags(
         result = merge(result, { columnSizing });
     }
 
-    if (featureFlags.enableTableColumnsGrowToFit) {
+    if (featureFlags.enableTableColumnsGrowToFit && environment === DASHBOARDS_ENVIRONMENT) {
         result = merge(result, { growToFit: true });
     }
 
