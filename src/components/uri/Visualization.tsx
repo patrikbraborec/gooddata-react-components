@@ -376,10 +376,7 @@ export class VisualizationWrapped extends React.Component<
                 );
 
                 const pivotTableColumnProps = {
-                    config: {
-                        ...config,
-                        ...getTableConfigFromFeatureFlags(this.state.featureFlags),
-                    },
+                    config: getTableConfigFromFeatureFlags(config, this.state.featureFlags),
                 };
 
                 // we do not need to pass totals={totals} because BucketPivotTable deals with changes in totals itself
@@ -419,6 +416,7 @@ export class VisualizationWrapped extends React.Component<
                 );
         }
     }
+
     public async prepareDataSources(
         projectId: string,
         identifier: string,

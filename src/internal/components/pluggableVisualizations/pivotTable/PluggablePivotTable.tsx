@@ -54,7 +54,8 @@ import { IPivotTableProps, PivotTable } from "../../../../components/core/PivotT
 import { generateDimensions } from "../../../../helpers/dimensions";
 import { DEFAULT_LOCALE } from "../../../../constants/localization";
 import { DASHBOARDS_ENVIRONMENT } from "../../../constants/properties";
-import { IColumnSizing, IMenu, IPivotTableConfig } from "../../../../interfaces/PivotTable";
+import { IMenu, IPivotTableConfig } from "../../../../interfaces/PivotTable";
+import { getTableConfigFromFeatureFlags } from "../../../../helpers/featureFlags";
 
 export const getColumnAttributes = (buckets: IBucket[]): IBucketItem[] => {
     return getItemsFromBuckets(
@@ -566,21 +567,12 @@ export class PluggablePivotTable extends AbstractPluggableVisualization {
     }
 
     private enrichConfigWithAutosize(config: IPivotTableConfig): IPivotTableConfig {
-        if (!this.featureFlags.enableTableColumnsAutoResizing) {
-            return config;
-        }
-
-        const columnSizing: IColumnSizing = { defaultWidth: "viewport" };
-        return merge(config, { columnSizing });
+        return getTableConfigFromFeatureFlags(config, this.featureFlags);
     }
 
     private enrichConfigWithGrowToFit(config: IPivotTableConfig): IPivotTableConfig {
         if (this.environment === DASHBOARDS_ENVIRONMENT) {
-            if (!this.featureFlags.enableTableColumnsGrowToFit) {
-                return config;
-            }
-
-            return merge(config, { growToFit: true });
+            return getTableConfigFromFeatureFlags(config, this.featureFlags);
         }
 
         return config;

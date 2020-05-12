@@ -3,6 +3,8 @@ import { IFeatureFlags, SDK } from "@gooddata/gooddata-js";
 import { getCachedOrLoad } from "./sdkCache";
 import { IChartConfig } from "../interfaces/Config";
 import isNil = require("lodash/isNil");
+import merge = require("lodash/merge");
+import { IColumnSizing, IPivotTableConfig } from "../interfaces/PivotTable";
 
 export async function getFeatureFlags(sdk: SDK, projectId: string): Promise<IFeatureFlags> {
     const apiCallIdentifier = `getFeatureFlags.${projectId}`;
@@ -31,10 +33,20 @@ export function setConfigFromFeatureFlags(config: IChartConfig, featureFlags: IF
     return result;
 }
 
-export function getTableConfigFromFeatureFlags(featureFlags: IFeatureFlags) {
+export function getTableConfigFromFeatureFlags(
+    config: IPivotTableConfig,
+    featureFlags: IFeatureFlags,
+): IPivotTableConfig {
+    let result: IPivotTableConfig = config;
+    const columnSizing: IColumnSizing = { defaultWidth: "viewport" };
+
     if (featureFlags.enableTableColumnsAutoResizing) {
-        return { columnSizing: { defaultWidth: "viewport" } };
+        result = merge(result, { columnSizing });
     }
 
-    return {};
+    if (featureFlags.enableTableColumnsGrowToFit) {
+        result = merge(result, { growToFit: true });
+    }
+
+    return result;
 }
