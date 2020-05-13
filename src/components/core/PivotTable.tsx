@@ -48,7 +48,13 @@ import {
 } from "../../interfaces/DrillEvents";
 import { IHeaderPredicate } from "../../interfaces/HeaderPredicate";
 import { IMappingHeader, isMappingHeaderAttribute } from "../../interfaces/MappingHeader";
-import { IMenuAggregationClickConfig, IPivotTableConfig } from "../../interfaces/PivotTable";
+import {
+    IMenuAggregationClickConfig,
+    IPivotTableConfig,
+    IResizedColumns,
+    IGrowToFittedColumns,
+    ColumnEventSourceType,
+} from "../../interfaces/PivotTable";
 import { IDataSourceProviderInjectedProps } from "../afm/DataSourceProvider";
 import { LoadingComponent } from "../simple/LoadingComponent";
 import TotalsUtils, {
@@ -114,6 +120,7 @@ import isEqual = require("lodash/isEqual");
 import noop = require("lodash/noop");
 import sumBy = require("lodash/sumBy");
 import difference = require("lodash/difference");
+import { convertColumnWidthsToMap } from "./pivotTable/agGridColumnSizing";
 
 export interface IPivotTableProps extends ICommonChartProps, IDataSourceProviderInjectedProps {
     totals?: VisualizationObject.IVisualizationTotal[];
@@ -137,24 +144,10 @@ export interface IPivotTableState {
     resized: boolean;
 }
 
-export interface IResizedColumns {
-    [columnIdentifier: string]: { width: number; source: ColumnEventSourceType };
-}
-
-export interface IGrowToFittedColumns {
-    [columnIdentifier: string]: { width: number };
-}
-
 export type IPivotTableInnerProps = IPivotTableProps &
     ILoadingInjectedProps &
     IDataSourceProviderInjectedProps &
     WrappedComponentProps;
-
-export enum ColumnEventSourceType {
-    AUTOSIZE_COLUMNS = "autosizeColumns",
-    UI_DRAGGED = "uiColumnDragged",
-    FIT_GROW = "growToFit",
-}
 
 const DEFAULT_ROW_HEIGHT = 28;
 const DEFAULT_AUTOSIZE_PADDING = 10;
@@ -193,7 +186,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
     };
 
     private resizedColumns: IResizedColumns = {};
-    private growToFittedColumns: IGrowToFittedColumns = {};
+    private growToFittedColumns: IResizedColumns = {};
     private watchingIntervalId: number | null;
     private watchingTimeoutId: number | null;
     private resizing: boolean = false;
@@ -302,8 +295,12 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
 
     public renderVisualization() {
         const { desiredHeight } = this.state;
+<<<<<<< HEAD
         const gridOptions = this.createGridOptions();
         const CustomLoadingComponent = this.props.LoadingComponent;
+=======
+        const gridOptions: any = this.createGridOptions();
+>>>>>>> 5c3fbf17... * propagate widthDefinition into aggrid
 
         // columnDefs are loaded with first page request. Show overlay loading before first page is available.
         const tableLoadingOverlay = this.isTableHidden() ? (
@@ -342,6 +339,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
                             this.props.dataSource.getAfm(),
                             this.state.agGridRerenderNumber,
                         )}
+                        debug={true}
                     />
                     {tableLoadingOverlay}
                 </div>
@@ -617,6 +615,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
 
             this.growToFittedColumns[id] = {
                 width: col.getActualWidth(),
+                source: ColumnEventSourceType.FIT_GROW,
             };
         });
     }
@@ -691,6 +690,12 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         ) => {
             if (!isEqual(columnDefs, this.state.columnDefs)) {
                 const sortedByFirstAttribute = isSortedByFirstAttibute(columnDefs, resultSpec);
+
+                // TODO INE - this solves only first render, not change of columnWidths during lifetime
+                // const columnWidths = this.props.config && this.props.config.columnSizing && this.props.config.columnSizing.columnWidths || [];
+                // const columnWidthsByField = convertColumnWidthsToMap(columnWidths, execution.executionResponse);
+                // const enrichedColumnDefs = Object.keys(columnWidthsByField).length ? this.enrichColumnDefinitionsWithWidths(columnDefs, columnWidthsByField) : columnDefs;
+
                 this.setState({
                     columnDefs,
                     sortedByFirstAttribute,
@@ -1005,8 +1010,25 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
             intl: this.props.intl,
         };
 
+<<<<<<< HEAD
         if (this.isColumnAutoresizeEnabled()) {
             this.enrichColumnDefinitionsWithWidths(getTreeLeaves(columnDefs), this.resizedColumns);
+=======
+        let maxWidthProp = {};
+        let enrichedColumnDefs = columnDefs;
+        const columnWidths =
+            (this.props.config &&
+                this.props.config.columnSizing &&
+                this.props.config.columnSizing.columnWidths) ||
+            [];
+        const columnWidthsByField = convertColumnWidthsToMap(columnWidths, this.getExecutionResponse());
+        if (Object.keys(this.resizedColumns).length || Object.keys(columnWidthsByField).length) {
+            enrichedColumnDefs = this.enrichColumnDefinitionsWithWidths(getTreeLeaves(columnDefs), {
+                ...columnWidthsByField,
+                ...this.resizedColumns,
+            });
+            maxWidthProp = { maxWidth: AUTO_SIZED_MAX_WIDTH };
+>>>>>>> 5c3fbf17... * propagate widthDefinition into aggrid
         }
 
         if (this.isGrowToFitEnabled()) {
@@ -1019,7 +1041,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         const rowCount = this.getInfiniteInitialRowCountRowCount();
         return {
             // Initial data
-            columnDefs,
+            columnDefs: enrichedColumnDefs,
             rowData,
             defaultColDef: {
                 cellClass: this.getCellClass(null),
@@ -1310,14 +1332,20 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         columnDefinitions: IGridHeader[],
         resizedColumns: IResizedColumns,
     ) {
-        columnDefinitions.forEach((columnDefinition: IGridHeader) => {
+        return columnDefinitions.map((columnDefinition: IGridHeader) => {
             if (columnDefinition) {
                 const resizedColumn = resizedColumns[this.getColumnIdentifier(columnDefinition)];
 
                 if (resizedColumn) {
-                    columnDefinition.width = resizedColumn.width;
+                    return {
+                        ...columnDefinition,
+                        width: resizedColumn.width,
+                    };
                 }
             }
+            return {
+                ...columnDefinition,
+            };
         });
     }
 
