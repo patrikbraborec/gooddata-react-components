@@ -429,7 +429,7 @@ export class PluggablePivotTable extends AbstractPluggableVisualization {
             const updatedConfig = getTableConfigFromFeatureFlags(
                 this.enrichConfigWithMenu(config),
                 this.featureFlags,
-                this.environment,
+                this.environment === DASHBOARDS_ENVIRONMENT,
             );
             const pivotTableProps = {
                 projectId: this.projectId,

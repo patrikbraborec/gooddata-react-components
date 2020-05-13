@@ -5,8 +5,6 @@ import { IChartConfig } from "../interfaces/Config";
 import isNil = require("lodash/isNil");
 import merge = require("lodash/merge");
 import { IColumnSizing, IPivotTableConfig } from "../interfaces/PivotTable";
-import { DASHBOARDS_ENVIRONMENT } from "../internal/constants/properties";
-import { VisualizationEnvironment } from "../components/uri/Visualization";
 
 export async function getFeatureFlags(sdk: SDK, projectId: string): Promise<IFeatureFlags> {
     const apiCallIdentifier = `getFeatureFlags.${projectId}`;
@@ -39,16 +37,25 @@ export function setConfigFromFeatureFlags(config: IChartConfig, featureFlags: IF
 export function getTableConfigFromFeatureFlags(
     config: IPivotTableConfig,
     featureFlags: IFeatureFlags,
-    environment?: VisualizationEnvironment,
+    predicateEnvironment: boolean = true,
+    widthDefs?: any,
 ): IPivotTableConfig {
     let result: IPivotTableConfig = config;
-    const columnSizing: IColumnSizing = { defaultWidth: "viewport" };
 
     if (featureFlags.enableTableColumnsAutoResizing) {
+        let columnSizing: IColumnSizing = { defaultWidth: "viewport" };
+
+        if (featureFlags.enableTableColumnsManualResizing && widthDefs) {
+            columnSizing = {
+                ...columnSizing,
+                columnWidths: widthDefs,
+            };
+        }
+
         result = merge(result, { columnSizing });
     }
 
-    if (featureFlags.enableTableColumnsGrowToFit && environment === DASHBOARDS_ENVIRONMENT) {
+    if (featureFlags.enableTableColumnsGrowToFit && predicateEnvironment) {
         result = merge(result, { growToFit: true });
     }
 

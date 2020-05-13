@@ -56,7 +56,6 @@ import { _experimentalDataSourceFactory } from "./experimentalDataSource";
 import IVisualizationObjectContent = VisualizationObject.IVisualizationObjectContent;
 import { getHighchartsAxisNameConfiguration } from "../../internal/utils/propertiesHelper";
 import { DEFAULT_LOCALE } from "../../constants/localization";
-
 export { Requireable };
 
 const { ExecuteAfmAdapter, toAfmResultSpec, createSubject } = DataLayer;
@@ -228,7 +227,6 @@ export class VisualizationWrapped extends React.Component<
 
         this.sdk = props.sdk ? props.sdk.clone() : createSdk();
         setTelemetryHeaders(this.sdk, "Visualization", props);
-
         this.isUnmounted = false;
         this.visualizationUri = props.uri;
 
@@ -377,9 +375,16 @@ export class VisualizationWrapped extends React.Component<
                 );
 
                 // TODO ONE-4407 widthDefs
-                // const widthDefs = mdObject.content.properties;
+                const mdObjectContentProperties =
+                    mdObject.content &&
+                    mdObject.content.properties &&
+                    JSON.parse(mdObject.content.properties);
+                const widthDefs =
+                    mdObjectContentProperties && mdObjectContentProperties.widthDefs
+                        ? mdObjectContentProperties.widthDefs
+                        : undefined;
                 const pivotTableColumnProps = {
-                    config: getTableConfigFromFeatureFlags(config, this.state.featureFlags),
+                    config: getTableConfigFromFeatureFlags(config, this.state.featureFlags, widthDefs),
                 };
 
                 // we do not need to pass totals={totals} because BucketPivotTable deals with changes in totals itself
