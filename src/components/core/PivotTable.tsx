@@ -295,12 +295,8 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
 
     public renderVisualization() {
         const { desiredHeight } = this.state;
-<<<<<<< HEAD
-        const gridOptions = this.createGridOptions();
-        const CustomLoadingComponent = this.props.LoadingComponent;
-=======
         const gridOptions: any = this.createGridOptions();
->>>>>>> 5c3fbf17... * propagate widthDefinition into aggrid
+        const CustomLoadingComponent = this.props.LoadingComponent;
 
         // columnDefs are loaded with first page request. Show overlay loading before first page is available.
         const tableLoadingOverlay = this.isTableHidden() ? (
@@ -1013,11 +1009,6 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
             intl: this.props.intl,
         };
 
-<<<<<<< HEAD
-        if (this.isColumnAutoresizeEnabled()) {
-            this.enrichColumnDefinitionsWithWidths(getTreeLeaves(columnDefs), this.resizedColumns);
-=======
-        let maxWidthProp = {};
         let enrichedColumnDefs = columnDefs;
         const columnWidths =
             (this.props.config &&
@@ -1030,8 +1021,6 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
                 ...columnWidthsByField,
                 ...this.resizedColumns,
             });
-            maxWidthProp = { maxWidth: AUTO_SIZED_MAX_WIDTH };
->>>>>>> 5c3fbf17... * propagate widthDefinition into aggrid
         }
 
         if (this.isGrowToFitEnabled()) {
