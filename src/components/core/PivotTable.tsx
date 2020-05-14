@@ -120,7 +120,7 @@ import isEqual = require("lodash/isEqual");
 import noop = require("lodash/noop");
 import sumBy = require("lodash/sumBy");
 import difference = require("lodash/difference");
-import { convertColumnWidthsToMap } from "./pivotTable/agGridColumnSizing";
+import { convertColumnWidthsToMap, getColumnFromModel } from "./pivotTable/agGridColumnSizing";
 
 export interface IPivotTableProps extends ICommonChartProps, IDataSourceProviderInjectedProps {
     totals?: VisualizationObject.IVisualizationTotal[];
@@ -161,6 +161,7 @@ const AGGRID_BEFORE_RESIZE_TIMEOUT = 100;
 const AGGRID_ON_RESIZE_TIMEOUT = 300;
 const DEFAULT_COLUMN_WIDTH = 200;
 const AUTO_SIZED_MAX_WIDTH = 500;
+
 /**
  * Pivot Table react component
  */
@@ -936,12 +937,18 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         }
         this.updateDesiredHeight(this.state.execution.executionResult);
         if (columnEvent && columnEvent.source === ColumnEventSourceType.UI_DRAGGED && columnEvent.columns) {
-            columnEvent.columns.forEach(column => {
+            const columns = columnEvent.columns;
+            const execution = this.getExecution();
+
+            columns.forEach(column => {
                 this.addToResizeColumn(column, ColumnEventSourceType.UI_DRAGGED);
                 column.getColDef().suppressSizeToFit = true;
             });
 
             this.growToFit(columnEvent.columnApi);
+
+            getColumnFromModel(columns, execution);
+            // call this.prop.onColumnResized
         }
     };
 
@@ -990,6 +997,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
 
         return pageSize;
     }
+
     //
     // grid options & styling
     //
