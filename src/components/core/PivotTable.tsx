@@ -484,6 +484,9 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         }
 
         const displayedVirtualColumns = columnApi.getAllDisplayedVirtualColumns();
+        // TODO INE - filter out columns which match some of columnWidthItems
+        // be aware of difference between 'field' and 'colId'
+        // in future matching function will be more complex than comparison of strings
         const autoWidthColumnIds: string[] = this.getColumnIds(displayedVirtualColumns);
         if (previouslyResizedColumnIds.length >= autoWidthColumnIds.length) {
             this.resizedColumns = this.getResizedColumns(
@@ -1023,7 +1026,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
             [];
         const columnWidthsByField = convertColumnWidthsToMap(columnWidths, this.getExecutionResponse());
         if (Object.keys(this.resizedColumns).length || Object.keys(columnWidthsByField).length) {
-            enrichedColumnDefs = this.enrichColumnDefinitionsWithWidths(getTreeLeaves(columnDefs), {
+            enrichedColumnDefs = this.enrichColumnDefinitionsWithWidths(columnDefs, {
                 ...columnWidthsByField,
                 ...this.resizedColumns,
             });
@@ -1332,21 +1335,18 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         columnDefinitions: IGridHeader[],
         resizedColumns: IResizedColumns,
     ) {
-        return columnDefinitions.map((columnDefinition: IGridHeader) => {
+        const result = cloneDeep(columnDefinitions);
+        const leaves = getTreeLeaves(result);
+        leaves.forEach((columnDefinition: IGridHeader) => {
             if (columnDefinition) {
                 const resizedColumn = resizedColumns[this.getColumnIdentifier(columnDefinition)];
 
                 if (resizedColumn) {
-                    return {
-                        ...columnDefinition,
-                        width: resizedColumn.width,
-                    };
+                    columnDefinition.width = resizedColumn.width;
                 }
             }
-            return {
-                ...columnDefinition,
-            };
         });
+        return result;
     }
 
     private enrichColumnDefinitionsWithGrowToFitWidths(
