@@ -373,7 +373,6 @@ export class VisualizationWrapped extends React.Component<
                     processedVisualizationObject,
                     filtersFromProps,
                 );
-
                 // TODO ONE-4407 here could be function to get widthDefs from mdObject.content
                 const mdObjectContentProperties =
                     mdObject.content &&
@@ -384,9 +383,13 @@ export class VisualizationWrapped extends React.Component<
                         ? mdObjectContentProperties.widthDefs
                         : undefined;
                 const pivotTableColumnProps = {
-                    config: getTableConfigFromFeatureFlags(config, this.state.featureFlags, widthDefs),
+                    config: getTableConfigFromFeatureFlags(
+                        config,
+                        /*this.state.featureFlags*/ testFF,
+                        false,
+                        widthDefs,
+                    ),
                 };
-
                 // we do not need to pass totals={totals} because BucketPivotTable deals with changes in totals itself
                 return (
                     <PivotTableComponent {...commonProps} {...pivotBucketProps} {...pivotTableColumnProps} />

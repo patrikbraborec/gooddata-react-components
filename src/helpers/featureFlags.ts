@@ -40,18 +40,21 @@ export function getTableConfigFromFeatureFlags(
     predicateEnvironment: boolean = true,
     widthDefs?: any,
 ): IPivotTableConfig {
-    let result: IPivotTableConfig = config;
+    let result: IPivotTableConfig = {
+        ...config,
+    };
+    let columnSizing: IColumnSizing = { defaultWidth: "unset" };
 
     if (featureFlags.enableTableColumnsAutoResizing) {
-        let columnSizing: IColumnSizing = { defaultWidth: "viewport" };
+        columnSizing = { defaultWidth: "viewport" };
+        result = merge(result, { columnSizing });
+    }
 
-        if (featureFlags.enableTableColumnsManualResizing && widthDefs) {
-            columnSizing = {
-                ...columnSizing,
-                columnWidths: widthDefs,
-            };
-        }
-
+    if (featureFlags.enableTableColumnsManualResizing && widthDefs) {
+        columnSizing = {
+            ...columnSizing,
+            columnWidths: widthDefs,
+        };
         result = merge(result, { columnSizing });
     }
 
