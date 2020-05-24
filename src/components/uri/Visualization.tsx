@@ -374,7 +374,7 @@ export class VisualizationWrapped extends React.Component<
                     filtersFromProps,
                 );
 
-                // TODO ONE-4407 widthDefs
+                // TODO ONE-4407 here could be function to get widthDefs from mdObject.content
                 const mdObjectContentProperties =
                     mdObject.content &&
                     mdObject.content.properties &&
