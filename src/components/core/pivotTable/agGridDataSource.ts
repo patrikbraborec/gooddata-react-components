@@ -12,7 +12,7 @@ import {
     getAttributeSortItemFieldAndDirection,
     assignSorting,
 } from "./agGridSorting";
-import { IAgGridPage, IGridAdapterOptions, IGridHeader } from "./agGridTypes";
+import { IAgGridPage, IGridAdapterOptions, IGridHeader, IGridRow } from "./agGridTypes";
 
 import { IGetPage } from "../base/VisualizationLoadingHOC";
 import { IGroupingProvider } from "../pivotTable/GroupingProvider";
@@ -34,6 +34,7 @@ export const getDataSourceRowsGetter = (
         execution: Execution.IExecutionResponses,
         columnDefs: IGridHeader[],
         resultSpec: AFM.IResultSpec,
+        rowData?: IGridRow[],
     ) => void,
     getGridApi: () => GridApi,
     intl: IntlShape,
@@ -100,7 +101,7 @@ export const getDataSourceRowsGetter = (
             groupingProvider.processPage(rowData, offset[0], rowAttributeIds);
             // RAIL-1130: Backend returns incorrectly total: [1, N], when count: [0, N] and offset: [0, N]
             const lastRow = offset[0] === 0 && count[0] === 0 ? 0 : total[0];
-            onSuccess(execution, columnDefs, resultSpecUpdated);
+            onSuccess(execution, columnDefs, resultSpecUpdated, rowData);
             successCallback(rowData, lastRow);
 
             // set totals
@@ -237,6 +238,7 @@ class GdToAgGridAdapter implements IDatasource {
             execution: Execution.IExecutionResponses,
             columnDefs: IGridHeader[],
             resultSpec: AFM.IResultSpec,
+            rowData?: IGridRow[],
         ) => void,
         getGridApi: () => any,
         intl: IntlShape,
@@ -293,6 +295,7 @@ export const createAgGridDataSource = (
         execution: Execution.IExecutionResponses,
         columnDefs: IGridHeader[],
         resultSpec: AFM.IResultSpec,
+        rowData?: IGridRow[],
     ) => void,
     getGridApi: () => any,
     intl: IntlShape,

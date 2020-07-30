@@ -6,9 +6,21 @@ import { Model, PivotTable } from "../../../src";
 import { onErrorHandler } from "../../mocks";
 import { ATTRIBUTE_1, ATTRIBUTE_COUNTRY, MEASURE_1, MEASURE_2 } from "../../data/componentProps";
 import { ScreenshotReadyWrapper, visualizationNotLoadingResolver } from "../../utils/ScreenshotReadyWrapper";
-import { VisualizationInput } from "@gooddata/typings";
+import { VisualizationInput, AFM } from "@gooddata/typings";
 
 const wrapperStyle = { width: 1200, height: 300 };
+const measureSortItem: AFM.IMeasureSortItem = {
+    measureSortItem: {
+        direction: "asc",
+        locators: [
+            {
+                measureLocatorItem: {
+                    measureIdentifier: "m2",
+                },
+            },
+        ],
+    },
+};
 
 storiesOf("Core components/PivotTable/AutoResizing", module)
     .add("auto resize columns in the viewport - simple table", () =>
@@ -23,6 +35,24 @@ storiesOf("Core components/PivotTable/AutoResizing", module)
                         onError={onErrorHandler}
                         LoadingComponent={null}
                         ErrorComponent={null}
+                    />
+                </div>
+            </ScreenshotReadyWrapper>,
+        ),
+    )
+    .add("auto resizing includes sort icon into header width", () =>
+        screenshotWrap(
+            <ScreenshotReadyWrapper resolver={visualizationNotLoadingResolver()}>
+                <div style={wrapperStyle} className="s-table">
+                    <PivotTable
+                        projectId="storybook"
+                        measures={[MEASURE_1, MEASURE_2]}
+                        rows={[ATTRIBUTE_1]}
+                        config={{ columnSizing: { defaultWidth: "viewport" } }}
+                        onError={onErrorHandler}
+                        LoadingComponent={null}
+                        ErrorComponent={null}
+                        sortBy={[measureSortItem]}
                     />
                 </div>
             </ScreenshotReadyWrapper>,

@@ -11,6 +11,8 @@ import {
     getColumnIdentifierFromDef,
     getColumnIdentifier,
     isMeasureColumn,
+    isMeasureColumnReadyToRender,
+    getMeasureFormat,
 } from "./agGridUtils";
 import { FIELD_SEPARATOR, FIELD_TYPE_ATTRIBUTE, FIELD_TYPE_MEASURE, ID_SEPARATOR } from "./agGridConst";
 import { assortDimensionHeaders, identifyResponseHeader } from "./agGridHeaders";
@@ -28,17 +30,19 @@ import {
     ColumnWidth,
     isAbsoluteColumnWidth,
 } from "../../../interfaces/PivotTable";
-import { IGridHeader } from "./agGridTypes";
-import { ColumnApi, Column } from "ag-grid-community";
+import { IGridHeader, IGridRow } from "./agGridTypes";
+import { ColumnApi, Column, GridApi, ColDef } from "ag-grid-community";
 import {
     ResizedColumnsStore,
     IResizedColumnsCollection,
     IWeakMeasureColumnWidthItemsMap,
 } from "./ResizedColumnsStore";
+import { getMeasureCellFormattedValue } from "../../../helpers/tableCell";
 
 export const MIN_WIDTH = 60;
 export const AUTO_SIZED_MAX_WIDTH = 500;
 export const MANUALLY_SIZED_MAX_WIDTH = 2000;
+const SORT_ICON_WIDTH = 12;
 
 /*
  * All code related to column resizing the ag-grid backed Pivot Table is concentrated here
@@ -336,3 +340,157 @@ export const resizeWeakMeasureColumns = (
 };
 
 export const getAllowGrowToFitProp = (allowGrowToFit: boolean) => (allowGrowToFit ? { allowGrowToFit } : {});
+
+/**
+ * Custom implementation of columns autoresizing according content
+ */
+
+const canvas = document.createElement("canvas");
+const context = canvas.getContext("2d");
+
+const collectMaxWidth = (
+    text: string,
+    group: string,
+    hasSort: boolean = false,
+    maxWidths: Map<string, number>,
+) => {
+    const width = hasSort
+        ? context.measureText(text).width + SORT_ICON_WIDTH
+        : context.measureText(text).width;
+
+    const maxWidth = maxWidths.get(group);
+    // console.log(text, width, maxWidth);
+
+    if (maxWidth === undefined || width > maxWidth) {
+        maxWidths.set(group, width);
+    }
+};
+
+const collectMaxWidthCached = (
+    text: string,
+    group: string,
+    maxWidths: Map<string, number>,
+    widthsCache: Map<string, number>,
+) => {
+    const cachedWidth = widthsCache.get(text);
+
+    let width;
+
+    if (cachedWidth === undefined) {
+        width = context.measureText(text).width;
+        widthsCache.set(text, width);
+    } else {
+        // console.log("cache hit");
+        width = cachedWidth;
+    }
+
+    const maxWidth = maxWidths.get(group);
+    // console.log(text, width, maxWidth);
+
+    if (maxWidth === undefined || width > maxWidth) {
+        maxWidths.set(group, width);
+    }
+};
+
+const valueFormatter = (
+    text: string,
+    colDef: IGridHeader,
+    execution: Execution.IExecutionResponses,
+    separators: any,
+) => {
+    return isMeasureColumnReadyToRender({ value: text }, execution)
+        ? getMeasureCellFormattedValue(text, getMeasureFormat(colDef, execution), separators)
+        : null;
+};
+
+const calculateColumnWidths = (config: any) => {
+    console.time("Column widths calculation");
+
+    const maxWidths = new Map<string, number>();
+
+    if (config.measureHeaders) {
+        context.font = config.headerFont;
+
+        config.columnDefs.forEach((column: IGridHeader) => {
+            collectMaxWidth(column.headerName, column.field, !!column.sort, maxWidths);
+        });
+    }
+
+    context.font = config.rowFont;
+
+    config.rowData.forEach((row: IGridRow) => {
+        config.columnDefs.forEach((column: IGridHeader) => {
+            const text = row[column.field];
+            const formattedText =
+                isMeasureColumn(column) && valueFormatter(text, column, config.execution, config.separators);
+            const textForCalculation = formattedText || text;
+            if (config.cache) {
+                collectMaxWidthCached(textForCalculation, column.field, maxWidths, config.cache);
+            } else {
+                collectMaxWidth(textForCalculation, column.field, false, maxWidths);
+            }
+        });
+    });
+
+    const updatedColumnDefs = config.columnDefs.map((cd: IGridHeader) => {
+        // console.log("calculated max width", maxWidths.get(cd.field))
+        const newWidth = Math.ceil(maxWidths.get(cd.field) + config.padding);
+        return {
+            ...cd,
+            width: Math.min(Math.max(MIN_WIDTH, newWidth), AUTO_SIZED_MAX_WIDTH),
+        };
+    });
+
+    console.timeEnd("Column widths calculation");
+
+    return updatedColumnDefs;
+};
+
+export const autoresizeAllColumns = (
+    columnDefs: ColDef[],
+    rowData: IGridRow[],
+    gridApi: GridApi,
+    columnApi: ColumnApi,
+    execution: Execution.IExecutionResponses,
+    options: {
+        measureHeaders: boolean;
+        headerFont: string;
+        rowFont: string;
+        padding: number;
+        separators: any;
+        useWidthsCache: boolean;
+    },
+) => {
+    console.time("Resize all columns (including widths calculation)");
+
+    if (gridApi && columnApi) {
+        const updatedColumDefs = calculateColumnWidths({
+            columnDefs,
+            rowData,
+            execution,
+            measureHeaders: options.measureHeaders,
+            headerFont: options.headerFont,
+            rowFont: options.rowFont,
+            padding: options.padding,
+            separators: options.separators,
+            cache: options.useWidthsCache ? new Map() : null,
+        });
+
+        // Setting width by setColumnWidth has the advantage of preserving column
+        // changes done by user such as sorting or filters. The disadvantage is that
+        // initial resize might be slow if the grid was scrolled towards later columns
+        // before resizing was invoked (bug in the gird?).
+        // Resize by gridApi.setColumnDefs(updatedColumDefs) or setColumnDefs(updatedColumDefs)
+        // should be faster but columns settings could be reset (mind deltaColumnMode)...
+        const autoResizedColumns = {};
+        updatedColumDefs.forEach((columnDef: ColDef) => {
+            // console.log(columnDef.field, columnDef.width);
+            columnApi.setColumnWidth(columnDef.field, columnDef.width);
+            autoResizedColumns[getColumnIdentifier(columnDef)] = {
+                width: columnDef.width,
+            };
+        });
+        console.timeEnd("Resize all columns (including widths calculation)");
+        return autoResizedColumns;
+    }
+};

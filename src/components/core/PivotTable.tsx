@@ -123,19 +123,20 @@ import get = require("lodash/get");
 import isEqual = require("lodash/isEqual");
 import noop = require("lodash/noop");
 import sumBy = require("lodash/sumBy");
-import difference = require("lodash/difference");
+// import difference = require("lodash/difference");
 import debounce = require("lodash/debounce");
 
 import {
     MANUALLY_SIZED_MAX_WIDTH,
     MIN_WIDTH,
-    AUTO_SIZED_MAX_WIDTH,
+    // AUTO_SIZED_MAX_WIDTH,
     enrichColumnDefinitionsWithWidths,
     isColumnAutoResized,
     syncSuppressSizeToFitOnColumns,
     resetColumnsWidthToDefault,
     resizeAllMeasuresColumns,
     resizeWeakMeasureColumns,
+    autoresizeAllColumns,
 } from "./pivotTable/agGridColumnSizing";
 import { setColumnMaxWidth, setColumnMaxWidthIf } from "./pivotTable/agColumnWrapper";
 import { ResizedColumnsStore } from "./pivotTable/ResizedColumnsStore";
@@ -169,12 +170,12 @@ export type IPivotTableInnerProps = IPivotTableProps &
     WrappedComponentProps;
 
 const DEFAULT_ROW_HEIGHT = 28;
-const DEFAULT_AUTOSIZE_PADDING = 10;
+const DEFAULT_AUTOSIZE_PADDING = 12;
 const AG_NUMERIC_CELL_CLASSNAME = "ag-numeric-cell";
 const AG_NUMERIC_HEADER_CLASSNAME = "ag-numeric-header";
 
 export const WATCHING_TABLE_RENDERED_INTERVAL = 500;
-const AGGRID_RENDER_NEW_COLUMNS_TIMEOUT = 100;
+// const AGGRID_RENDER_NEW_COLUMNS_TIMEOUT = 100;
 const AGGRID_BEFORE_RESIZE_TIMEOUT = 100;
 const AGGRID_ON_RESIZE_TIMEOUT = 300;
 const COLUMN_RESIZE_TIMEOUT = 300;
@@ -499,62 +500,62 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
     private getColumnIds = (columns: Column[]): string[] =>
         columns.map((column: Column) => column.getColId());
 
-    private getAutoResizedColumns = (columns: Column[]): IResizedColumns => {
-        return columns.reduce((acc, col) => {
-            const columnId = getColumnIdentifier(col);
-            const resizedColumn = acc[columnId];
-            if (resizedColumn) {
-                return acc;
-            }
-            return {
-                ...acc,
-                [columnId]: {
-                    width: col.getActualWidth(),
-                },
-            };
-        }, this.autoResizedColumns);
-    };
+    // private getAutoResizedColumns = (columns: Column[]): IResizedColumns => {
+    //     return columns.reduce((acc, col) => {
+    //         const columnId = getColumnIdentifier(col);
+    //         const resizedColumn = acc[columnId];
+    //         if (resizedColumn) {
+    //             return acc;
+    //         }
+    //         return {
+    //             ...acc,
+    //             [columnId]: {
+    //                 width: col.getActualWidth(),
+    //             },
+    //         };
+    //     }, this.autoResizedColumns);
+    // };
 
-    private autoresizeVisibleColumns = async (
-        columnApi: ColumnApi,
-        previouslyResizedColumnIds: string[],
-        firstCall: boolean = true,
-    ): Promise<void> => {
-        if (!this.shouldPerformAutoresize()) {
-            return Promise.resolve();
-        }
+    // private autoresizeVisibleColumns = async (
+    //     columnApi: ColumnApi,
+    //     previouslyResizedColumnIds: string[],
+    //     firstCall: boolean = true,
+    // ): Promise<void> => {
+    //     if (!this.shouldPerformAutoresize()) {
+    //         return Promise.resolve();
+    //     }
 
-        if (!this.isColumnAutoresizeEnabled()) {
-            return Promise.resolve();
-        }
+    //     if (!this.isColumnAutoresizeEnabled()) {
+    //         return Promise.resolve();
+    //     }
 
-        if (firstCall) {
-            await sleep(AGGRID_BEFORE_RESIZE_TIMEOUT);
-        }
+    //     if (firstCall) {
+    //         await sleep(AGGRID_BEFORE_RESIZE_TIMEOUT);
+    //     }
 
-        const displayedVirtualColumns = columnApi.getAllDisplayedVirtualColumns();
+    //     const displayedVirtualColumns = columnApi.getAllDisplayedVirtualColumns();
 
-        const autoWidthColumnIds: string[] = this.getColumnIds(displayedVirtualColumns);
-        if (previouslyResizedColumnIds.length >= autoWidthColumnIds.length) {
-            this.autoResizedColumns = this.getAutoResizedColumns(columnApi.getAllDisplayedVirtualColumns());
-            return Promise.resolve();
-        }
+    //     const autoWidthColumnIds: string[] = this.getColumnIds(displayedVirtualColumns);
+    //     if (previouslyResizedColumnIds.length >= autoWidthColumnIds.length) {
+    //         this.autoResizedColumns = this.getAutoResizedColumns(columnApi.getAllDisplayedVirtualColumns());
+    //         return Promise.resolve();
+    //     }
 
-        return new Promise(async resolve => {
-            const newColumnIds = difference(autoWidthColumnIds, previouslyResizedColumnIds);
-            this.autoresizeColumnsByColumnId(columnApi, newColumnIds);
-            await sleep(AGGRID_RENDER_NEW_COLUMNS_TIMEOUT);
-            resolve(this.autoresizeVisibleColumns(columnApi, autoWidthColumnIds, false));
-        });
-    };
+    //     return new Promise(async resolve => {
+    //         const newColumnIds = difference(autoWidthColumnIds, previouslyResizedColumnIds);
+    //         this.autoresizeColumnsByColumnId(columnApi, newColumnIds);
+    //         await sleep(AGGRID_RENDER_NEW_COLUMNS_TIMEOUT);
+    //         resolve(this.autoresizeVisibleColumns(columnApi, autoWidthColumnIds, false));
+    //     });
+    // };
 
-    private autoresizeColumnsByColumnId(columnApi: ColumnApi, columnIds: string[]) {
-        setColumnMaxWidth(columnApi, columnIds, AUTO_SIZED_MAX_WIDTH);
+    // private autoresizeColumnsByColumnId(columnApi: ColumnApi, columnIds: string[]) {
+    //     setColumnMaxWidth(columnApi, columnIds, AUTO_SIZED_MAX_WIDTH);
 
-        columnApi.autoSizeColumns(columnIds);
+    //     columnApi.autoSizeColumns(columnIds);
 
-        setColumnMaxWidth(columnApi, columnIds, MANUALLY_SIZED_MAX_WIDTH);
-    }
+    //     setColumnMaxWidth(columnApi, columnIds, MANUALLY_SIZED_MAX_WIDTH);
+    // }
 
     private shouldPerformAutoresize() {
         const { execution } = this.state;
@@ -604,14 +605,42 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
     private autoresizeColumns = async (
         event: AgGridEvent,
         force: boolean = false,
-        previouslyResizedColumnIds: string[] = [],
+        _previouslyResizedColumnIds: string[] = [],
     ) => {
         const alreadyResized = () => this.state.resized || this.resizing;
 
         if (this.isPivotTableReady(event.api) && (!alreadyResized() || (alreadyResized() && force))) {
             this.resizing = true;
             // we need to know autosize width for each column, even manually resized ones, to support removal of columnWidth def from props
-            await this.autoresizeVisibleColumns(event.columnApi, previouslyResizedColumnIds);
+            // await this.autoresizeVisibleColumns(event.columnApi, previouslyResizedColumnIds);
+            if (!this.shouldPerformAutoresize()) {
+                return Promise.resolve();
+            }
+
+            if (!this.isColumnAutoresizeEnabled()) {
+                return Promise.resolve();
+            }
+
+            await sleep(AGGRID_BEFORE_RESIZE_TIMEOUT);
+            const separators = get(this.props, ["config", "separators"], undefined);
+            const columnDefs = event.columnApi
+                .getPrimaryColumns()
+                .map(primaryColumn => primaryColumn.getColDef());
+            this.autoResizedColumns = autoresizeAllColumns(
+                columnDefs,
+                this.state.rowData,
+                event.api,
+                event.columnApi,
+                this.state.execution,
+                {
+                    measureHeaders: true,
+                    headerFont: "400 12px avenir",
+                    rowFont: "400 12px avenir",
+                    padding: 2 * DEFAULT_AUTOSIZE_PADDING,
+                    useWidthsCache: true,
+                    separators,
+                },
+            );
             // after that we need to reset manually resized columns back to its manually set width by growToFit or by helper. See UT resetColumnsWidthToDefault for width priorities
             if (this.isGrowToFitEnabled()) {
                 this.growToFit(event.columnApi);
@@ -779,6 +808,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
             execution: Execution.IExecutionResponses,
             columnDefs: IGridHeader[],
             resultSpec: AFM.IResultSpec,
+            rowData: IGridRow[],
         ) => {
             let enrichedColumnDefs = enrichColumnDefinitionsWithWidths(
                 columnDefs,
@@ -816,6 +846,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
             if (!isEqual(execution, this.state.execution)) {
                 this.setState({
                     execution,
+                    rowData: [...rowData, ...this.state.rowData],
                 });
             }
             this.updateDesiredHeight(execution.executionResult);
@@ -836,7 +867,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
     }
 
     private setGridDataSource() {
-        this.setState({ execution: null });
+        this.setState({ execution: null, rowData: [] });
         if (this.gridApi) {
             this.gridApi.setDatasource(this.agGridDataSource);
         }
@@ -1053,7 +1084,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
             return;
         }
 
-        this.autoresizeColumnsByColumnId(this.columnApi, this.getColumnIds([column]));
+        // this.autoresizeColumnsByColumnId(this.columnApi, this.getColumnIds([column]));
         if (isColumnDisplayed(this.columnApi.getAllDisplayedVirtualColumns(), column)) {
             // skip columns out of viewport because these can not be autoresized
             this.resizedColumnsStore.addToManuallyResizedColumn(column, true);
@@ -1210,7 +1241,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
     //
 
     private createGridOptions = (): ICustomGridOptions => {
-        const { columnDefs, rowData } = this.state;
+        const { columnDefs } = this.state;
         const { pageSize } = this.props;
 
         const separators = get(this.props, ["config", "separators"], undefined);
@@ -1227,7 +1258,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         return {
             // Initial data
             columnDefs,
-            rowData,
+            rowData: [],
             defaultColDef: {
                 cellClass: this.getCellClass(null),
                 headerComponentFramework: ColumnHeader as any,
