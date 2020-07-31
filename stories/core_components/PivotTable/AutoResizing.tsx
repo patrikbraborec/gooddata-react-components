@@ -40,7 +40,7 @@ storiesOf("Core components/PivotTable/AutoResizing", module)
             </ScreenshotReadyWrapper>,
         ),
     )
-    .add("auto resizing includes sort icon into header width", () =>
+    .add("auto resizing all columns includes sort icon into header width", () =>
         screenshotWrap(
             <ScreenshotReadyWrapper resolver={visualizationNotLoadingResolver()}>
                 <div style={wrapperStyle} className="s-table">
@@ -48,7 +48,7 @@ storiesOf("Core components/PivotTable/AutoResizing", module)
                         projectId="storybook"
                         measures={[MEASURE_1, MEASURE_2]}
                         rows={[ATTRIBUTE_1]}
-                        config={{ columnSizing: { defaultWidth: "viewport" } }}
+                        config={{ columnSizing: { defaultWidth: "autoresizeAll" } }}
                         onError={onErrorHandler}
                         LoadingComponent={null}
                         ErrorComponent={null}

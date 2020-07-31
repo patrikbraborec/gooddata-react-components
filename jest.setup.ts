@@ -2,6 +2,7 @@
 import { configure } from "enzyme";
 import * as EnzymeAdapter from "enzyme-adapter-react-16";
 import "jest-enzyme";
+import 'jest-canvas-mock';
 import * as requestAnimationFrame from "raf";
 import "@formatjs/intl-pluralrules";
 import "@formatjs/intl-pluralrules/polyfill-locales";

@@ -13,8 +13,16 @@ import {
     isMeasureColumn,
     isMeasureColumnReadyToRender,
     getMeasureFormat,
+    isSomeTotal,
 } from "./agGridUtils";
-import { FIELD_SEPARATOR, FIELD_TYPE_ATTRIBUTE, FIELD_TYPE_MEASURE, ID_SEPARATOR } from "./agGridConst";
+import {
+    FIELD_SEPARATOR,
+    FIELD_TYPE_ATTRIBUTE,
+    FIELD_TYPE_MEASURE,
+    ID_SEPARATOR,
+    VALUE_CLASS,
+    HEADER_LABEL_CLASS,
+} from "./agGridConst";
 import { assortDimensionHeaders, identifyResponseHeader } from "./agGridHeaders";
 import invariant = require("invariant");
 
@@ -345,10 +353,8 @@ export const getAllowGrowToFitProp = (allowGrowToFit: boolean) => (allowGrowToFi
  * Custom implementation of columns autoresizing according content
  */
 
-const canvas = document.createElement("canvas");
-const context = canvas.getContext("2d");
-
 const collectMaxWidth = (
+    context: CanvasRenderingContext2D,
     text: string,
     group: string,
     hasSort: boolean = false,
@@ -367,6 +373,7 @@ const collectMaxWidth = (
 };
 
 const collectMaxWidthCached = (
+    context: CanvasRenderingContext2D,
     text: string,
     group: string,
     maxWidths: Map<string, number>,
@@ -405,6 +412,7 @@ const valueFormatter = (
 
 const calculateColumnWidths = (config: any) => {
     console.time("Column widths calculation");
+    const { context } = config;
 
     const maxWidths = new Map<string, number>();
 
@@ -412,22 +420,21 @@ const calculateColumnWidths = (config: any) => {
         context.font = config.headerFont;
 
         config.columnDefs.forEach((column: IGridHeader) => {
-            collectMaxWidth(column.headerName, column.field, !!column.sort, maxWidths);
+            collectMaxWidth(context, column.headerName, column.field, !!column.sort, maxWidths);
         });
     }
 
-    context.font = config.rowFont;
-
     config.rowData.forEach((row: IGridRow) => {
+        context.font = isSomeTotal(row.type) ? config.totalFont : config.rowFont;
         config.columnDefs.forEach((column: IGridHeader) => {
             const text = row[column.field];
             const formattedText =
                 isMeasureColumn(column) && valueFormatter(text, column, config.execution, config.separators);
             const textForCalculation = formattedText || text;
             if (config.cache) {
-                collectMaxWidthCached(textForCalculation, column.field, maxWidths, config.cache);
+                collectMaxWidthCached(context, textForCalculation, column.field, maxWidths, config.cache);
             } else {
-                collectMaxWidth(textForCalculation, column.field, false, maxWidths);
+                collectMaxWidth(context, textForCalculation, column.field, false, maxWidths);
             }
         });
     });
@@ -455,6 +462,7 @@ export const autoresizeAllColumns = (
     options: {
         measureHeaders: boolean;
         headerFont: string;
+        totalFont: string;
         rowFont: string;
         padding: number;
         separators: any;
@@ -464,12 +472,17 @@ export const autoresizeAllColumns = (
     console.time("Resize all columns (including widths calculation)");
 
     if (gridApi && columnApi) {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
         const updatedColumDefs = calculateColumnWidths({
+            context,
             columnDefs,
             rowData,
             execution,
             measureHeaders: options.measureHeaders,
             headerFont: options.headerFont,
+            totalFont: options.totalFont,
             rowFont: options.rowFont,
             padding: options.padding,
             separators: options.separators,
@@ -493,4 +506,18 @@ export const autoresizeAllColumns = (
         console.timeEnd("Resize all columns (including widths calculation)");
         return autoResizedColumns;
     }
+};
+
+export const getTableFonts = (columnApi: ColumnApi) => {
+    // TODO INE: All fonts are gotten from first column and its header and first cell. Once we will have font different for each cell/header/row this will not work
+    const column = columnApi.getAllDisplayedVirtualColumns()[0];
+    const autoWidthCalculator = (columnApi as any).columnController.autoWidthCalculator;
+    const headerCell = autoWidthCalculator.getHeaderCellForColumn(column);
+    const headerCellValue = headerCell.getElementsByClassName(HEADER_LABEL_CLASS)[0];
+    const headerFont = window.getComputedStyle(headerCellValue).font || "400 12px avenir";
+    const cell = autoWidthCalculator.rowRenderer.getAllCellsForColumn(column)[0];
+    const cellValue = cell.getElementsByClassName(VALUE_CLASS)[0];
+    const rowFont = window.getComputedStyle(cellValue).font || "400 12px avenir";
+    console.log(headerFont, rowFont);
+    return { headerFont, rowFont };
 };

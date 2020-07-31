@@ -22,6 +22,7 @@ import {
     ROW_TOTAL,
     ROW_SUBTOTAL,
     MEASURE_COLUMN,
+    VALUE_CLASS,
 } from "./agGridConst";
 import { IGridHeader } from "./agGridTypes";
 
@@ -76,11 +77,14 @@ export const getGridIndex = (position: number, gridDistance: number) => {
     return Math.floor(position / gridDistance);
 };
 
+export const isSomeTotal = (rowType: string) => {
+    const isRowTotal = rowType === ROW_TOTAL;
+    const isRowSubtotal = rowType === ROW_SUBTOTAL;
+    return isRowTotal || isRowSubtotal;
+};
+
 export const cellRenderer = (params: ICellRendererParams) => {
-    const isRowTotalOrSubtotal =
-        params.data &&
-        params.data.type &&
-        (params.data.type === ROW_TOTAL || params.data.type === ROW_SUBTOTAL);
+    const isRowTotalOrSubtotal = params.data && params.data.type && isSomeTotal(params.data.type);
 
     const isActiveRowTotal =
         isRowTotalOrSubtotal && // short circuit for non row totals
@@ -94,8 +98,8 @@ export const cellRenderer = (params: ICellRendererParams) => {
         isRowTotalOrSubtotal && !isActiveRowTotal && !params.value
             ? "" // inactive row total cells should be really empty (no "-") when they have no value (RAIL-1525)
             : escape(params.formatValue(params.value));
-    const className = params.node.rowPinned === "top" ? "gd-sticky-header-value" : "s-value";
-    return `<span class="${className}">${formattedValue || ""}</span>`;
+    const className = params.node.rowPinned === "top" ? "gd-sticky-header-value" : VALUE_CLASS;
+    return `<span class="${className}" style="font-size: 16px">${formattedValue || ""}</span>`; // TODO INE: remove style once not needed for tests
 };
 
 export const getTreeLeaves = (tree: any, getChildren = (node: any) => node && node.children) => {

@@ -8,7 +8,7 @@ export interface IMenu {
     aggregationsSubMenu?: boolean;
 }
 
-export type DefaultColumnWidth = "viewport" | "unset"; // | "auto"  | number; can be added later see ONE-4276
+export type DefaultColumnWidth = "viewport" | "unset" | "autoresizeAll"; // | number; can be added later see ONE-4276
 export interface IColumnSizing {
     defaultWidth?: DefaultColumnWidth;
     growToFit?: boolean;
