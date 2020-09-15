@@ -22,6 +22,7 @@ import {
     ID_SEPARATOR,
     VALUE_CLASS,
     HEADER_LABEL_CLASS,
+    DEFAULT_FONT,
 } from "./agGridConst";
 import { assortDimensionHeaders, identifyResponseHeader } from "./agGridHeaders";
 import invariant = require("invariant");
@@ -508,16 +509,23 @@ export const autoresizeAllColumns = (
     }
 };
 
-export const getTableFonts = (columnApi: ColumnApi) => {
+const composeTableFont = (className: string) => {
+    const headerElement = document.getElementsByClassName(className)[0];
+    let font = DEFAULT_FONT;
+    if (headerElement) {
+        const styles = window.getComputedStyle(headerElement, null);
+        const fontWeight = styles.getPropertyValue("font-weight");
+        const fontSize = styles.getPropertyValue("font-size");
+        const fontFamily = styles.getPropertyValue("font-family");
+        font = `${fontWeight} ${fontSize} ${fontFamily}`;
+    }
+    return font;
+};
+
+export const getTableFonts = () => {
     // TODO INE: All fonts are gotten from first column and its header and first cell. Once we will have font different for each cell/header/row this will not work
-    const column = columnApi.getAllDisplayedVirtualColumns()[0];
-    const autoWidthCalculator = (columnApi as any).columnController.autoWidthCalculator;
-    const headerCell = autoWidthCalculator.getHeaderCellForColumn(column);
-    const headerCellValue = headerCell.getElementsByClassName(HEADER_LABEL_CLASS)[0];
-    const headerFont = window.getComputedStyle(headerCellValue).font || "400 12px avenir";
-    const cell = autoWidthCalculator.rowRenderer.getAllCellsForColumn(column)[0];
-    const cellValue = cell.getElementsByClassName(VALUE_CLASS)[0];
-    const rowFont = window.getComputedStyle(cellValue).font || "400 12px avenir";
+    const headerFont = composeTableFont(HEADER_LABEL_CLASS);
+    const rowFont = composeTableFont(VALUE_CLASS);
     console.log(headerFont, rowFont);
     return { headerFont, rowFont };
 };

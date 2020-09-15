@@ -15,3 +15,4 @@ export const ROW_SUBTOTAL = "rowSubtotal";
 export const COLUMN_GROUPING_DELIMITER = " › ";
 export const VALUE_CLASS = "s-value";
 export const HEADER_LABEL_CLASS = "s-header-cell-label";
+export const DEFAULT_FONT = "400 12px avenir";
