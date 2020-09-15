@@ -572,7 +572,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         await sleep(AGGRID_BEFORE_RESIZE_TIMEOUT);
         const separators = get(this.props, ["config", "separators"], undefined);
         const columnDefs = columnApi.getPrimaryColumns().map(primaryColumn => primaryColumn.getColDef());
-        const { headerFont, rowFont } = getTableFonts();
+        const { headerFont, rowFont } = getTableFonts(this.containerRef);
         this.autoResizedColumns = autoresizeAllColumns(
             columnDefs,
             this.state.rowData,
