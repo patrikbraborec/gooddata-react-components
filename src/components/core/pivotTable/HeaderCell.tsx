@@ -130,7 +130,7 @@ export default class HeaderCell extends React.Component<IHeaderCellProps, IHeade
                 onClick={this.onTextClick}
                 onMouseEnter={this.onMouseEnterHeaderCellText}
                 onMouseLeave={this.onMouseLeaveHeaderCellText}
-                style={{ fontSize: "22px" }} // TODO INE: remove once not needed for tests
+                // style={{ fontSize: "22px" }} // TODO INE: remove once not needed for tests
             >
                 <span>{displayText ? displayText : ""}</span>
                 {this.renderSorting()}

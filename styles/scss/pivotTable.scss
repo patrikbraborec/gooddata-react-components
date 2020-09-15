@@ -170,6 +170,7 @@ $header-cell-resize-width: 20px;
 
         .gd-table-row-subtotal {
             font-weight: bold;
+            font-size: 30px !important; // todo: one-4491 - remove
             border-top: 1px solid transparentize($gd-color-disabled, 0.5);
             &-even {
                 background-color: #eff2f4;

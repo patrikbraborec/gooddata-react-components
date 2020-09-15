@@ -23,6 +23,7 @@ import {
     VALUE_CLASS,
     HEADER_LABEL_CLASS,
     DEFAULT_FONT,
+    ROW_SUBTOTAL_CLASS,
 } from "./agGridConst";
 import { assortDimensionHeaders, identifyResponseHeader } from "./agGridHeaders";
 import invariant = require("invariant");
@@ -509,7 +510,7 @@ export const autoresizeAllColumns = (
     }
 };
 
-const composeTableFont = (containerRef: HTMLDivElement, className: string) => {
+const getTableFont = (containerRef: HTMLDivElement, className: string) => {
     const element = containerRef.getElementsByClassName(className)[0];
     let font = DEFAULT_FONT;
     if (element) {
@@ -520,8 +521,8 @@ const composeTableFont = (containerRef: HTMLDivElement, className: string) => {
 
 export const getTableFonts = (containerRef: HTMLDivElement) => {
     // TODO INE: All fonts are gotten from first column and its header and first cell. Once we will have font different for each cell/header/row this will not work
-    const headerFont = composeTableFont(containerRef, HEADER_LABEL_CLASS);
-    const rowFont = composeTableFont(containerRef, VALUE_CLASS);
-    console.log(headerFont, rowFont);
-    return { headerFont, rowFont };
+    const headerFont = getTableFont(containerRef, HEADER_LABEL_CLASS);
+    const rowFont = getTableFont(containerRef, VALUE_CLASS);
+    const rowSubtotalFont = getTableFont(containerRef, ROW_SUBTOTAL_CLASS);
+    return { headerFont, rowFont, rowSubtotalFont };
 };

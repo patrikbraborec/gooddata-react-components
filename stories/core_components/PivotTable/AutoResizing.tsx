@@ -90,7 +90,7 @@ storiesOf("Core components/PivotTable/AutoResizing", module)
                         measures={measures}
                         rows={attributes}
                         totals={totals}
-                        config={{ columnSizing: { defaultWidth: "viewport" } }}
+                        config={{ columnSizing: { defaultWidth: "autoresizeAll" } }}
                         onError={onErrorHandler}
                         LoadingComponent={null}
                         ErrorComponent={null}

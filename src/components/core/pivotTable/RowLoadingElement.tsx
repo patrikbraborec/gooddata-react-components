@@ -21,9 +21,8 @@ export const RowLoadingElement = (props: ICellRendererParams) => {
         // props.value is always unformatted
         // there is props.formattedValue, but this is null for row attributes for some reason
         return (
-            <span className={`${VALUE_CLASS} s-loading-done`} style={{ fontSize: "16px" }}>
-                {props.formatValue(props.value)}
-            </span>
+            // <span className={`${VALUE_CLASS} s-loading-done`} style={{ fontSize: "16px" }}> // TODO: one-4491 remove
+            <span className={`${VALUE_CLASS} s-loading-done`}>{props.formatValue(props.value)}</span>
         );
     }
     return <LoadingComponent width={36} imageHeight={8} height={26} speed={2} />;

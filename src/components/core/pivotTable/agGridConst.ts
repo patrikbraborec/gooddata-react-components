@@ -15,4 +15,6 @@ export const ROW_SUBTOTAL = "rowSubtotal";
 export const COLUMN_GROUPING_DELIMITER = " › ";
 export const VALUE_CLASS = "s-value";
 export const HEADER_LABEL_CLASS = "s-header-cell-label";
+export const ROW_SUBTOTAL_CLASS = "gd-table-row-subtotal";
 export const DEFAULT_FONT = "400 12px avenir";
+export const DEFAULT_FONT_TOTAL = "800 12px avenir";

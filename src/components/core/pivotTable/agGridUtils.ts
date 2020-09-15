@@ -99,7 +99,7 @@ export const cellRenderer = (params: ICellRendererParams) => {
             ? "" // inactive row total cells should be really empty (no "-") when they have no value (RAIL-1525)
             : escape(params.formatValue(params.value));
     const className = params.node.rowPinned === "top" ? "gd-sticky-header-value" : VALUE_CLASS;
-    return `<span class="${className}" style="font-size: 16px">${formattedValue || ""}</span>`; // TODO INE: remove style once not needed for tests
+    return `<span class="${className}">${formattedValue || ""}</span>`;
 };
 
 export const getTreeLeaves = (tree: any, getChildren = (node: any) => node && node.children) => {
