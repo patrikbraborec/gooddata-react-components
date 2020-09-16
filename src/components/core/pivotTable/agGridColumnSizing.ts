@@ -427,7 +427,8 @@ const calculateColumnWidths = (config: any) => {
     }
 
     config.rowData.forEach((row: IGridRow) => {
-        context.font = isSomeTotal(row.type) ? config.totalFont : config.rowFont;
+        console.log("rowType", row.type);
+        context.font = isSomeTotal(row.type) ? config.subtotalFont : config.rowFont;
         config.columnDefs.forEach((column: IGridHeader) => {
             const text = row[column.field];
             const formattedText =
@@ -464,7 +465,7 @@ export const autoresizeAllColumns = (
     options: {
         measureHeaders: boolean;
         headerFont: string;
-        totalFont: string;
+        subtotalFont: string;
         rowFont: string;
         padding: number;
         separators: any;
@@ -473,6 +474,12 @@ export const autoresizeAllColumns = (
 ) => {
     console.time("Resize all columns (including widths calculation)");
 
+    console.log("getPinnedBottomRowCount", gridApi.getPinnedBottomRowCount());
+    console.log("getPinnedBottomRow", gridApi.getPinnedBottomRow(0).data);
+
+    // pbr todo: one-4491 - test
+    const updatedRowData = [...rowData, gridApi.getPinnedBottomRow(0).data];
+
     if (gridApi && columnApi) {
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
@@ -480,11 +487,11 @@ export const autoresizeAllColumns = (
         const updatedColumDefs = calculateColumnWidths({
             context,
             columnDefs,
-            rowData,
+            rowData: updatedRowData,
             execution,
             measureHeaders: options.measureHeaders,
             headerFont: options.headerFont,
-            totalFont: options.totalFont,
+            subtotalFont: options.subtotalFont,
             rowFont: options.rowFont,
             padding: options.padding,
             separators: options.separators,
@@ -523,6 +530,6 @@ export const getTableFonts = (containerRef: HTMLDivElement) => {
     // TODO INE: All fonts are gotten from first column and its header and first cell. Once we will have font different for each cell/header/row this will not work
     const headerFont = getTableFont(containerRef, HEADER_LABEL_CLASS);
     const rowFont = getTableFont(containerRef, VALUE_CLASS);
-    const rowSubtotalFont = getTableFont(containerRef, ROW_SUBTOTAL_CLASS);
-    return { headerFont, rowFont, rowSubtotalFont };
+    const subtotalFont = getTableFont(containerRef, ROW_SUBTOTAL_CLASS);
+    return { headerFont, rowFont, subtotalFont };
 };

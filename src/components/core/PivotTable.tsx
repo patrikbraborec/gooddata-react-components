@@ -572,10 +572,11 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
         await sleep(AGGRID_BEFORE_RESIZE_TIMEOUT);
         const separators = get(this.props, ["config", "separators"], undefined);
         const columnDefs = columnApi.getPrimaryColumns().map(primaryColumn => primaryColumn.getColDef());
-        const { headerFont, rowFont, rowSubtotalFont: totalFont } = getTableFonts(this.containerRef);
+        const { headerFont, rowFont, subtotalFont } = getTableFonts(this.containerRef);
         console.log("headerFont", headerFont);
         console.log("rowFont", rowFont);
-        console.log("totalFont", totalFont);
+        console.log("totalFont", subtotalFont);
+        console.log(this.state);
         this.autoResizedColumns = autoresizeAllColumns(
             columnDefs,
             this.state.rowData,
@@ -585,7 +586,7 @@ export class PivotTableInner extends BaseVisualization<IPivotTableInnerProps, IP
             {
                 measureHeaders: true,
                 headerFont,
-                totalFont,
+                subtotalFont,
                 rowFont,
                 padding: 2 * DEFAULT_AUTOSIZE_PADDING,
                 useWidthsCache: true,
